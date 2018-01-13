@@ -1,0 +1,136 @@
+# -*- coding: utf-8 -*-
+import urllib2
+import urllib
+import time
+import json
+import xlwt
+
+http_url='https://api-cn.faceplusplus.com/facepp/v3/detect'
+key = "itb2D-Tp2nAbzci7t2pP3svvP4JK3MMd"
+secret = "3D7KXZOFnZ2HdfiS_-QEa9wgyhPAONLq"
+path = "R:\\mood\\weekend\\xidenWeekend\\B\\"
+filesuffix = ".jpg"
+people = 1
+
+
+
+wbk = xlwt.Workbook()
+sheet = wbk.add_sheet('sheet 1')
+sheet.write(0, 0, "gender")
+sheet.write(0, 1, "age")
+sheet.write(0, 2, "smile")
+sheet.write(0, 3, "neutral")
+sheet.write(0, 4, "disgust")
+sheet.write(0, 5, "anger")
+sheet.write(0, 6, "surprise")
+sheet.write(0, 7, "fear")
+sheet.write(0, 8, "happiness")
+sheet.write(0, 9, "headpose")
+sheet.write(0,10, "malescore")
+sheet.write(0,11, "femalescore")
+
+while True:
+    filename = raw_input("please enter file name: ")
+    if filename == "end": break
+    try:
+        i = int(filename)
+    except:
+        print "please enter a number"
+        continue
+
+
+    #set total number of imgs
+    for k in range(0,180):
+        print k
+        ii = i + k
+        file_name = str(ii)+ "0"
+        print file_name
+        filepath = path + file_name + filesuffix
+        boundary = '----------%s' % hex(int(time.time() * 1000))
+        data = []
+        data.append('--%s' % boundary)
+        data.append('Content-Disposition: form-data; name="%s"\r\n' % 'api_key')
+        data.append(key)
+        data.append('--%s' % boundary)
+        data.append('Content-Disposition: form-data; name="%s"\r\n' % 'api_secret')
+        data.append(secret)
+        data.append('--%s' % boundary)
+        fr = open(filepath, 'rb')
+        data.append('Content-Disposition: form-data; name="%s"; filename=" "' % 'image_file')
+        data.append('Content-Type: %s\r\n' % 'application/octet-stream')
+        data.append(fr.read())
+        fr.close()
+        data.append('--%s' % boundary)
+        data.append('Content-Disposition: form-data; name="%s"\r\n' % 'calculate_all')
+        data.append('1')
+
+        data.append('--%s' % boundary)
+        data.append('Content-Disposition: form-data; name="%s"\r\n' % 'return_attributes')
+        data.append("gender,age,smiling,emotion,headpose,beauty,skinstatus")
+
+        data.append('--%s--\r\n' % boundary)
+        http_body = '\r\n'.join(data)
+        # buld http request
+        req = urllib2.Request(http_url)
+        # header
+        req.add_header('Content-Type', 'multipart/form-data; boundary=%s' % boundary)
+        req.add_data(http_body)
+        try:
+            # req.add_header('Referer','http://remotserver.com/')
+            # post data to server
+            resp = urllib2.urlopen(req, timeout=5)
+            # get response
+            qrcont = resp.read()
+            print qrcont
+        except urllib2.HTTPError as e:
+            print e.read()
+        js = json.loads(str(qrcont))
+        length = len(js["faces"])
+        for j in range(0,length):
+            Gender = js["faces"][j]["attributes"]["gender"]["value"]
+            Age = js["faces"][j]["attributes"]["age"]["value"]
+            Smile = js["faces"][j]["attributes"]["smile"]["value"]
+            sadness = js["faces"][j]["attributes"]["emotion"]["sadness"]
+            neutral = js["faces"][j]["attributes"]["emotion"]["neutral"]
+            disgust = js["faces"][j]["attributes"]["emotion"]["disgust"]
+            anger = js["faces"][j]["attributes"]["emotion"]["anger"]
+            surprise = js["faces"][j]["attributes"]["emotion"]["surprise"]
+            fear = js["faces"][j]["attributes"]["emotion"]["fear"]
+            happiness = js["faces"][j]["attributes"]["emotion"]["happiness"]
+            headpose = js["faces"][j]["attributes"]["headpose"]["yaw_angle"]
+            malescore = js["faces"][j]["attributes"]["beauty"]["male_score"]
+            femalescore = js["faces"][j]["attributes"]["beauty"]["female_score"]
+            sheet.write(people, 0, Gender )
+            sheet.write(people, 1, Age)
+            sheet.write(people, 2, Smile)
+            sheet.write(people, 3, neutral)
+            sheet.write(people, 4, disgust)
+            sheet.write(people, 5, anger)
+            sheet.write(people, 6, surprise)
+            sheet.write(people, 7, fear)
+            sheet.write(people, 8, happiness)
+            sheet.write(people, 9, headpose)
+            sheet.write(people, 10, malescore)
+            sheet.write(people, 11, femalescore)
+            people = people + 1
+
+
+wbk.save('xidenWeekend_B.xls')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
